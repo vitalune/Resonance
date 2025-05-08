@@ -78,12 +78,12 @@ const LangtonGrid: React.FC<LangtonGridProps> = ({ grid, antPosition, antDirecti
           row.map((cellColor, x) => {
             const isAntPosition = antPosition.x === x && antPosition.y === y;
             const cellClass = cn(
-              'grid-cell border border-border/20', // Cell border
+              'grid-cell border border-foreground/20', // Cell border: light gray using foreground
               {
                 // Use theme variables for cell colors, ensuring contrast
-                'bg-card-foreground': cellColor === 0, // "White" cells (light, from card's text color)
-                'bg-muted': cellColor === 1,         // "Black" cells (muted blue-gray)
-                'ant-cell': isAntPosition,           // Ant's current cell (red)
+                'bg-muted': cellColor === 0,           // Grid background (Langton's "white" cell) is very dark gray (muted blue-gray)
+                'bg-card-foreground': cellColor === 1, // Active path (Langton's "black" cell) is white (card's text color)
+                'ant-cell': isAntPosition,           // Ant's current cell (red, defined in globals.css)
                 [directionClasses[antDirection]]: isAntPosition, // Ant's direction indicator
               }
             );
@@ -97,7 +97,7 @@ const LangtonGrid: React.FC<LangtonGridProps> = ({ grid, antPosition, antDirecti
                   height: `${dynamicCellSize}px`,
                 }}
                 role="gridcell"
-                aria-label={`Cell (${x}, ${y}), Color: ${cellColor === 0 ? 'Light' : 'Dark Muted'}${isAntPosition ? ', Ant Position' : ''}`}
+                aria-label={`Cell (${x}, ${y}), Color: ${cellColor === 0 ? 'Grid Background' : 'Active Path'}${isAntPosition ? ', Ant Position' : ''}`}
               />
             );
           })
