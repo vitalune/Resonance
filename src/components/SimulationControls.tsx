@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 
 interface SimulationControlsProps {
   isRunning: boolean;
-  speed: number;
+  speed: number; // Current speed in ms
   stepCount: number;
   onStart: () => void;
   onPause: () => void;
@@ -19,6 +19,9 @@ interface SimulationControlsProps {
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
 }
+
+const MIN_ANT_SPEED = 1; // Corresponds to fastest (e.g., 1ms)
+const MAX_ANT_SPEED = 1000; // Corresponds to slowest (e.g., 1000ms)
 
 const SimulationControls: React.FC<SimulationControlsProps> = ({
   isRunning,
@@ -31,12 +34,14 @@ const SimulationControls: React.FC<SimulationControlsProps> = ({
   isFullscreen,
   onToggleFullscreen,
 }) => {
-  const sliderValue = 100 - ((speed - 10) / (1000 - 10)) * 100;
+  // Slider value: 0 = slowest (MAX_ANT_SPEED), 100 = fastest (MIN_ANT_SPEED)
+  const sliderValue = ((MAX_ANT_SPEED - speed) / (MAX_ANT_SPEED - MIN_ANT_SPEED)) * 100;
   const [controlsVisible, setControlsVisible] = React.useState(true);
 
   const handleSliderChange = (value: number[]) => {
-    const newSpeed = 1000 - ((value[0] / 100) * (1000 - 10));
-    onSpeedChange(newSpeed);
+    // Convert slider value (0-100) back to speed (MAX_ANT_SPEED - MIN_ANT_SPEED ms)
+    const newSpeed = MAX_ANT_SPEED - ((value[0] / 100) * (MAX_ANT_SPEED - MIN_ANT_SPEED));
+    onSpeedChange(Math.max(MIN_ANT_SPEED, Math.min(newSpeed, MAX_ANT_SPEED))); // Ensure speed is within bounds
   };
 
   const toggleControlsVisibility = () => {
@@ -69,8 +74,8 @@ const SimulationControls: React.FC<SimulationControlsProps> = ({
                 <Turtle className="text-muted-foreground" />
                 <Slider
                 id="speed-slider"
-                min={0}
-                max={100}
+                min={0} // Represents slowest
+                max={100} // Represents fastest
                 step={1}
                 value={[sliderValue]}
                 onValueChange={handleSliderChange}

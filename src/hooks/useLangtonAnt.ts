@@ -4,6 +4,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 const GRID_SIZE = 50; // Default grid size
+const MIN_SPEED_MS = 1; // Minimum milliseconds between steps (fastest)
+const MAX_SPEED_MS = 1000; // Maximum milliseconds between steps (slowest)
 const INITIAL_SPEED = 100; // Milliseconds between steps
 
 // Directions: 0: up, 1: right, 2: down, 3: left
@@ -117,8 +119,8 @@ export const useLangtonAnt = (gridSize = GRID_SIZE) => {
 
   // Function to change simulation speed
   const changeSpeed = (newSpeed: number) => {
-    // Clamp speed between reasonable values (e.g., 10ms to 1000ms)
-    const clampedSpeed = Math.max(10, Math.min(newSpeed, 1000));
+    // Clamp speed between defined min and max values
+    const clampedSpeed = Math.max(MIN_SPEED_MS, Math.min(newSpeed, MAX_SPEED_MS));
     setSpeed(clampedSpeed);
   };
 
