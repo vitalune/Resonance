@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -16,67 +15,122 @@ const directions = [
   { dx: -1, dy: 0 }, // left
 ];
 
+// Grid cell states:
+// 0: Background (e.g., 'white' in classic Langton, dark gray here)
+// 1: Trail of Ant 1 (e.g., 'black' in classic Langton, white here)
+// 2: Trail of Ant 2 (e.g., yellow here)
+
+interface AntRule {
+  conditionColor: number; // Color on the grid the ant encounters
+  turnDirection: 'L' | 'R'; // Turn Left or Right
+  paintColor: number; // Color to paint on the grid cell
+}
+
+interface AntConfig {
+  id: string;
+  initialX: (gridSize: number) => number;
+  initialY: (gridSize: number) => number;
+  initialDirection: number;
+  rules: AntRule[];
+  bodyColor: string; // CSS color for the ant's body
+}
+
+const antConfigs: AntConfig[] = [
+  {
+    id: 'ant1',
+    initialX: (size) => Math.floor(size * 0.75),
+    initialY: (size) => Math.floor(size * 0.75),
+    initialDirection: 0, // Up
+    rules: [
+      { conditionColor: 0, turnDirection: 'R', paintColor: 1 }, // On background (0), paint Ant1-trail (1), turn R
+      { conditionColor: 1, turnDirection: 'L', paintColor: 0 }, // On Ant1-trail (1), paint background (0), turn L
+      { conditionColor: 2, turnDirection: 'L', paintColor: 0 }, // On Ant2-trail (2), paint background (0), turn L
+    ],
+    bodyColor: '#FF4500', // Red
+  },
+  {
+    id: 'ant2',
+    initialX: (size) => Math.floor(size * 0.25),
+    initialY: (size) => Math.floor(size * 0.25),
+    initialDirection: 2, // Down
+    rules: [
+      { conditionColor: 0, turnDirection: 'R', paintColor: 2 }, // On background (0), paint Ant2-trail (2), turn R
+      { conditionColor: 1, turnDirection: 'R', paintColor: 0 }, // On Ant1-trail (1), paint background (0), turn R (different interaction)
+      { conditionColor: 2, turnDirection: 'L', paintColor: 0 }, // On Ant2-trail (2), paint background (0), turn L
+    ],
+    bodyColor: '#00BCD4', // Cyan/Teal
+  },
+];
+
+interface AntState {
+  id: string;
+  x: number;
+  y: number;
+  direction: number;
+  config: AntConfig;
+}
+
 // Function to create an initial empty grid
 const createInitialGrid = (size: number): number[][] => {
-  return Array(size).fill(0).map(() => Array(size).fill(0)); // 0 represents 'white'
+  return Array(size).fill(0).map(() => Array(size).fill(0)); // 0 represents background
+};
+
+const initializeAnts = (gridSize: number): AntState[] => {
+  return antConfigs.map(config => ({
+    id: config.id,
+    x: config.initialX(gridSize),
+    y: config.initialY(gridSize),
+    direction: config.initialDirection,
+    config: config,
+  }));
 };
 
 export const useLangtonAnt = (gridSize = GRID_SIZE) => {
   const [grid, setGrid] = useState(() => createInitialGrid(gridSize));
-  const [antPosition, setAntPosition] = useState({
-    x: Math.floor(gridSize * 0.75),
-    y: Math.floor(gridSize * 0.75),
-  });
-
-  const [antDirection, setAntDirection] = useState(0); // Start facing up
+  const [ants, setAnts] = useState<AntState[]>(() => initializeAnts(gridSize));
   const [isRunning, setIsRunning] = useState(false);
   const [speed, setSpeed] = useState(INITIAL_SPEED);
   const [stepCount, setStepCount] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Function to perform one step of the simulation
   const step = useCallback(() => {
     setGrid((prevGrid) => {
-      const newGrid = prevGrid.map(row => [...row]);
-      const { x, y } = antPosition;
+      const nextGridSnapshot = prevGrid.map(row => [...row]); // Mutable copy for current step's writes
+      
+      const updatedAnts = ants.map(antInstance => {
+        const { x, y, direction, config } = antInstance;
+        
+        // Ants read from the grid state as it was at the beginning of this step
+        const currentCellColorOnPrevGrid = prevGrid[y][x];
+        
+        const rule = config.rules.find(r => r.conditionColor === currentCellColorOnPrevGrid);
+        
+        let nextDirection = direction;
+        
+        if (rule) {
+          nextDirection = (direction + (rule.turnDirection === 'R' ? 1 : 3)) % 4;
+          // Apply paint to the grid copy. If multiple ants paint the same cell, the last one in the `ants` array wins for this step.
+          nextGridSnapshot[y][x] = rule.paintColor;
+        } else {
+          // Fallback: if an ant encounters a color for which it has no explicit rule.
+          // This shouldn't happen if rules are comprehensive for all possible grid colors (0, 1, 2).
+          // For safety, it could just move straight without painting or log a warning.
+          console.warn(`Ant ${config.id} encountered unhandled cell color ${currentCellColorOnPrevGrid} at (${x},${y}). Moving straight.`);
+        }
 
-      // Check boundary conditions (wrap around)
-      if (x < 0 || x >= gridSize || y < 0 || y >= gridSize) {
-        console.warn("Ant out of bounds, resetting position (this shouldn't happen with wrap-around).");
-        setAntPosition({
-          x: Math.floor(gridSize * 0.75),
-          y: Math.floor(gridSize * 0.75),
-        });
-        return prevGrid; // Return previous grid if somehow out of bounds
-      }
-
-      const currentCellColor = newGrid[y][x]; // 0 for white, 1 for black
-
-      let newDirection: number;
-      if (currentCellColor === 0) { // White square
-        newDirection = (antDirection + 1) % 4; // Turn right
-      } else { // Black square
-        newDirection = (antDirection + 3) % 4; // Turn left (equivalent to -1 + 4)
-      }
-
-      // Flip the color of the current square
-      newGrid[y][x] = 1 - currentCellColor;
-
-      // Move the ant one step forward in the new direction
-      const { dx, dy } = directions[newDirection];
-      let nextX = (x + dx + gridSize) % gridSize; // Wrap around horizontally
-      let nextY = (y + dy + gridSize) % gridSize; // Wrap around vertically
-
-
-      setAntPosition({ x: nextX, y: nextY });
-      setAntDirection(newDirection);
+        const { dx, dy } = directions[nextDirection];
+        const nextX = (x + dx + gridSize) % gridSize; // Wrap around
+        const nextY = (y + dy + gridSize) % gridSize; // Wrap around
+        
+        return { ...antInstance, x: nextX, y: nextY, direction: nextDirection };
+      });
+      
+      setAnts(updatedAnts); // Update all ants' positions/directions
       setStepCount((c) => c + 1);
-
-      return newGrid;
+      return nextGridSnapshot; // Return the modified grid
     });
-  }, [antPosition, antDirection, gridSize]);
+  }, [ants, gridSize]);
 
-  // Effect to handle the simulation interval
   useEffect(() => {
     if (isRunning) {
       intervalRef.current = setInterval(step, speed);
@@ -86,8 +140,6 @@ export const useLangtonAnt = (gridSize = GRID_SIZE) => {
         intervalRef.current = null;
       }
     }
-
-    // Cleanup interval on component unmount or when isRunning/speed changes
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -95,25 +147,13 @@ export const useLangtonAnt = (gridSize = GRID_SIZE) => {
     };
   }, [isRunning, speed, step]);
 
-  // Function to start the simulation
-  const start = () => {
-    setIsRunning(true);
-  };
+  const start = () => setIsRunning(true);
+  const pause = () => setIsRunning(false);
 
-  // Function to pause the simulation
-  const pause = () => {
-    setIsRunning(false);
-  };
-
-  // Function to reset the simulation
   const reset = () => {
     setIsRunning(false);
     setGrid(createInitialGrid(gridSize));
-    setAntPosition({
-      x: Math.floor(gridSize * 0.75),
-      y: Math.floor(gridSize * 0.75),
-    });
-    setAntDirection(0);
+    setAnts(initializeAnts(gridSize));
     setStepCount(0);
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
@@ -121,17 +161,23 @@ export const useLangtonAnt = (gridSize = GRID_SIZE) => {
     }
   };
 
-  // Function to change simulation speed
   const changeSpeed = (newSpeed: number) => {
-    // Clamp speed between defined min and max values
     const clampedSpeed = Math.max(MIN_SPEED_MS, Math.min(newSpeed, MAX_SPEED_MS));
     setSpeed(clampedSpeed);
   };
 
+  // Expose ants data needed for rendering
+  const antsForRender = ants.map(a => ({
+    id: a.id,
+    x: a.x,
+    y: a.y,
+    direction: a.direction,
+    color: a.config.bodyColor, // The ant's own body color
+  }));
+
   return {
     grid,
-    antPosition,
-    antDirection,
+    ants: antsForRender, // pass this to LangtonGrid
     isRunning,
     speed,
     stepCount,
@@ -139,6 +185,6 @@ export const useLangtonAnt = (gridSize = GRID_SIZE) => {
     pause,
     reset,
     changeSpeed,
-    step // Expose step function for manual stepping if needed
+    step,
   };
 };

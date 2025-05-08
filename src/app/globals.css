@@ -57,18 +57,18 @@
 }
 
 /* Custom styles for Langton's Ant */
-.ant-cell {
-  background-color: #FF4500 !important; /* Red Ant Color */
-  position: relative; 
-  transition: background-color 0.1s ease-in-out; 
-}
-
 .grid-cell {
     transition: background-color 0.1s ease-in-out; 
 }
 
+/* Base style for the ant indicator (arrow container) */
+.ant-indicator-base {
+  position: relative; 
+  /* The ant's body background color will be set via inline style in the component */
+}
+
 /* Arrow indicating ant direction - Use foreground (light text color) for visibility */
-.ant-cell::after {
+.ant-indicator-base::after {
   content: '';
   position: absolute;
   top: 50%;
@@ -78,24 +78,24 @@
   border-left: 4px solid transparent;
   border-right: 4px solid transparent;
   transform-origin: center center;
-  transform: translate(-50%, -75%); 
 }
 
 .ant-up::after {
   border-bottom: 6px solid hsl(var(--foreground)); 
+  transform: translate(-50%, -70%); /* Adjusted for better centering */
 }
 
 .ant-right::after {
    border-left: 6px solid hsl(var(--foreground)); 
-   transform: translate(-25%, -50%) rotate(90deg);
+   transform: translate(-30%, -50%) rotate(90deg); /* Adjusted for better centering */
 }
 
 .ant-down::after {
    border-top: 6px solid hsl(var(--foreground)); 
-   transform: translate(-50%, -25%) rotate(180deg);
+   transform: translate(-50%, -30%) rotate(180deg); /* Adjusted for better centering */
 }
 
 .ant-left::after {
    border-right: 6px solid hsl(var(--foreground)); 
-   transform: translate(-75%, -50%) rotate(270deg);
+   transform: translate(-70%, -50%) rotate(270deg); /* Adjusted for better centering */
 }

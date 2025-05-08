@@ -1,16 +1,9 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
-interface LangtonGridProps {
-  grid: number[][];
-  antPosition: { x: number; y: number };
-  antDirection: number;
-  isFullscreen: boolean;
-}
-
+// Corresponds to directions in useLangtonAnt: 0: up, 1: right, 2: down, 3: left
 const directionClasses: { [key: number]: string } = {
   0: 'ant-up',
   1: 'ant-right',
@@ -18,9 +11,23 @@ const directionClasses: { [key: number]: string } = {
   3: 'ant-left',
 };
 
+interface AntRenderInfo {
+  id: string;
+  x: number;
+  y: number;
+  direction: number;
+  color: string; // CSS color string for the ant's body
+}
+
+interface LangtonGridProps {
+  grid: number[][]; // Grid can now have values 0, 1, 2, etc.
+  ants: AntRenderInfo[];
+  isFullscreen: boolean;
+}
+
 const DEFAULT_CONTAINER_SIZE = 600; // For non-fullscreen
 
-const LangtonGrid: React.FC<LangtonGridProps> = ({ grid, antPosition, antDirection, isFullscreen }) => {
+const LangtonGrid: React.FC<LangtonGridProps> = ({ grid, ants, isFullscreen }) => {
   const gridSize = grid.length;
   const [dynamicCellSize, setDynamicCellSize] = useState(Math.floor(DEFAULT_CONTAINER_SIZE / gridSize));
 
@@ -29,25 +36,17 @@ const LangtonGrid: React.FC<LangtonGridProps> = ({ grid, antPosition, antDirecti
       if (isFullscreen) {
         const displayWidth = window.innerWidth;
         const displayHeight = window.innerHeight;
-        const size = Math.min(displayWidth, displayHeight) * 0.95; // Use 95% of smaller dimension
+        const size = Math.min(displayWidth, displayHeight) * 0.95;
         setDynamicCellSize(Math.max(1, Math.floor(size / gridSize))); 
       } else {
-        // Adjust default size calculation for potentially smaller max-w-max card
-        const cardMaxWidth = Math.min(DEFAULT_CONTAINER_SIZE, window.innerWidth * 0.9); // Example: 90vw or 600px
+        const cardMaxWidth = Math.min(DEFAULT_CONTAINER_SIZE, window.innerWidth * 0.9);
         setDynamicCellSize(Math.max(1, Math.floor(cardMaxWidth / gridSize)));
       }
     };
 
     calculateCellSize();
-
-    if (isFullscreen) {
-      window.addEventListener('resize', calculateCellSize);
-      return () => window.removeEventListener('resize', calculateCellSize);
-    } else {
-      // Recalculate on normal screen resize too, if card size is responsive
-      window.addEventListener('resize', calculateCellSize);
-      return () => window.removeEventListener('resize', calculateCellSize);
-    }
+    window.addEventListener('resize', calculateCellSize);
+    return () => window.removeEventListener('resize', calculateCellSize);
   }, [isFullscreen, gridSize]);
 
   const actualGridWidth = dynamicCellSize * gridSize;
@@ -58,13 +57,13 @@ const LangtonGrid: React.FC<LangtonGridProps> = ({ grid, antPosition, antDirecti
       className={cn(
         'flex items-center justify-center', 
         isFullscreen 
-          ? 'fixed inset-0 z-50 bg-background p-1 sm:p-2' // Fullscreen overlay, bg-background is dark blue
-          : 'relative mb-0 w-full' // Ensure it takes available width in card for normal view
+          ? 'fixed inset-0 z-50 bg-background p-1 sm:p-2'
+          : 'relative mb-0 w-full'
       )}
-      style={isFullscreen ? {} : { width: `${actualGridWidth}px`, height: `${actualGridHeight}px` }} // Constrain size in normal view
+      style={isFullscreen ? {} : { width: `${actualGridWidth}px`, height: `${actualGridHeight}px` }}
     >
       <div
-        className="grid" // Removed border classes: border border-border/30
+        className="grid"
         style={{
           gridTemplateColumns: `repeat(${gridSize}, ${dynamicCellSize}px)`,
           gridTemplateRows: `repeat(${gridSize}, ${dynamicCellSize}px)`,
@@ -75,30 +74,46 @@ const LangtonGrid: React.FC<LangtonGridProps> = ({ grid, antPosition, antDirecti
         role="grid"
       >
         {grid.map((row, y) =>
-          row.map((cellColor, x) => {
-            const isAntPosition = antPosition.x === x && antPosition.y === y;
-            const cellClass = cn(
-              'grid-cell', // Removed cell border classes: border border-foreground/20
-              {
-                // Use theme variables for cell colors, ensuring contrast
-                'bg-muted': cellColor === 0,           // Grid background (Langton's "white" cell) is very dark gray (muted blue-gray)
-                'bg-card-foreground': cellColor === 1, // Active path (Langton's "black" cell) is white (card's text color)
-                'ant-cell': isAntPosition,           // Ant's current cell (red, defined in globals.css)
-                [directionClasses[antDirection]]: isAntPosition, // Ant's direction indicator
-              }
-            );
+          row.map((cellState, x) => {
+            let cellBgClass = 'bg-muted'; // Default for state 0 (background)
+            if (cellState === 1) {
+              cellBgClass = 'bg-card-foreground'; // Ant 1 trail (white-ish)
+            } else if (cellState === 2) {
+              cellBgClass = 'bg-accent'; // Ant 2 trail (yellow)
+            }
 
+            const antsOnThisCell = ants.filter(ant => ant.x === x && ant.y === y);
+            
             return (
               <div
                 key={`${x}-${y}`}
-                className={cellClass}
+                className={cn('grid-cell relative', cellBgClass)} // Added 'relative' for ant positioning
                 style={{
                   width: `${dynamicCellSize}px`,
                   height: `${dynamicCellSize}px`,
                 }}
                 role="gridcell"
-                aria-label={`Cell (${x}, ${y}), Color: ${cellColor === 0 ? 'Grid Background' : 'Active Path'}${isAntPosition ? ', Ant Position' : ''}`}
-              />
+                aria-label={`Cell (${x}, ${y}), State: ${cellState}`}
+              >
+                {antsOnThisCell.map(ant => (
+                  <div
+                    key={ant.id}
+                    className={cn(
+                      'ant-indicator-base', // Base class for arrow pseudo-element
+                      directionClasses[ant.direction] // Applies the correct arrow direction
+                    )}
+                    style={{
+                      backgroundColor: ant.color, // Ant's body color
+                      position: 'absolute',
+                      width: '100%',
+                      height: '100%',
+                      top: 0,
+                      left: 0,
+                    }}
+                    aria-label={`Ant ${ant.id} at (${x},${y}) facing ${directionClasses[ant.direction]}`}
+                  />
+                ))}
+              </div>
             );
           })
         )}
