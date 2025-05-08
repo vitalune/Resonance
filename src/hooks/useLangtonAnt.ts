@@ -24,9 +24,10 @@ const createInitialGrid = (size: number): number[][] => {
 export const useLangtonAnt = (gridSize = GRID_SIZE) => {
   const [grid, setGrid] = useState(() => createInitialGrid(gridSize));
   const [antPosition, setAntPosition] = useState({
-    x: Math.floor(gridSize / 2),
-    y: Math.floor(gridSize / 2),
+    x: Math.floor(gridSize * 0.75),
+    y: Math.floor(gridSize * 0.75),
   });
+
   const [antDirection, setAntDirection] = useState(0); // Start facing up
   const [isRunning, setIsRunning] = useState(false);
   const [speed, setSpeed] = useState(INITIAL_SPEED);
@@ -42,7 +43,10 @@ export const useLangtonAnt = (gridSize = GRID_SIZE) => {
       // Check boundary conditions (wrap around)
       if (x < 0 || x >= gridSize || y < 0 || y >= gridSize) {
         console.warn("Ant out of bounds, resetting position (this shouldn't happen with wrap-around).");
-        setAntPosition({ x: Math.floor(gridSize / 2), y: Math.floor(gridSize / 2) });
+        setAntPosition({
+          x: Math.floor(gridSize * 0.75),
+          y: Math.floor(gridSize * 0.75),
+        });
         return prevGrid; // Return previous grid if somehow out of bounds
       }
 
@@ -106,8 +110,8 @@ export const useLangtonAnt = (gridSize = GRID_SIZE) => {
     setIsRunning(false);
     setGrid(createInitialGrid(gridSize));
     setAntPosition({
-      x: Math.floor(gridSize / 2),
-      y: Math.floor(gridSize / 2),
+      x: Math.floor(gridSize * 0.75),
+      y: Math.floor(gridSize * 0.75),
     });
     setAntDirection(0);
     setStepCount(0);
