@@ -5,7 +5,8 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
-import { Play, Pause, RotateCcw, Rabbit, Turtle } from 'lucide-react';
+import { Play, Pause, RotateCcw, Rabbit, Turtle, Expand, Shrink } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface SimulationControlsProps {
   isRunning: boolean;
@@ -15,6 +16,8 @@ interface SimulationControlsProps {
   onPause: () => void;
   onReset: () => void;
   onSpeedChange: (speed: number) => void;
+  isFullscreen: boolean;
+  onToggleFullscreen: () => void;
 }
 
 const SimulationControls: React.FC<SimulationControlsProps> = ({
@@ -25,9 +28,9 @@ const SimulationControls: React.FC<SimulationControlsProps> = ({
   onPause,
   onReset,
   onSpeedChange,
+  isFullscreen,
+  onToggleFullscreen,
 }) => {
-  // Map slider value (0-100) to simulation speed (1000ms - 10ms) inversely
-  // Slider value 0 = 1000ms (slow), Slider value 100 = 10ms (fast)
   const sliderValue = 100 - ((speed - 10) / (1000 - 10)) * 100;
 
   const handleSliderChange = (value: number[]) => {
@@ -36,11 +39,16 @@ const SimulationControls: React.FC<SimulationControlsProps> = ({
   };
 
   return (
-    <div className="mt-6 flex flex-col items-center gap-4 p-4 rounded-lg border bg-card shadow-sm w-full max-w-xl mx-auto">
-       <div className="text-sm text-muted-foreground mb-2">
+    <div className={cn(
+      "flex flex-col items-center gap-4 w-full max-w-xl mx-auto rounded-lg",
+      isFullscreen
+        ? "fixed bottom-0 left-1/2 -translate-x-1/2 z-[60] p-3 sm:p-4 bg-card/90 backdrop-blur-sm border shadow-xl mb-2 sm:mb-4 w-[calc(100%-1rem)] sm:w-auto" // Floating controls
+        : "mt-6 p-4 border bg-card shadow-sm" // Original styling
+    )}>
+       <div className="text-sm text-muted-foreground"> {/* Removed mb-2 to tighten space in fullscreen */}
         Step Count: {stepCount}
       </div>
-      <div className="flex justify-center gap-2 w-full">
+      <div className="flex flex-wrap justify-center gap-2 w-full">
         <Button onClick={isRunning ? onPause : onStart} variant="default" aria-label={isRunning ? 'Pause simulation' : 'Start simulation'}>
           {isRunning ? <Pause /> : <Play />}
           {isRunning ? 'Pause' : 'Start'}
@@ -48,6 +56,10 @@ const SimulationControls: React.FC<SimulationControlsProps> = ({
         <Button onClick={onReset} variant="outline" aria-label="Reset simulation">
           <RotateCcw />
           Reset
+        </Button>
+        <Button onClick={onToggleFullscreen} variant="outline" aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}>
+          {isFullscreen ? <Shrink /> : <Expand />}
+          {isFullscreen ? 'Exit' : 'Fullscreen'}
         </Button>
       </div>
       <div className="w-full max-w-xs mt-2">
@@ -70,7 +82,6 @@ const SimulationControls: React.FC<SimulationControlsProps> = ({
             {speed.toFixed(0)} ms / step
          </div>
       </div>
-
     </div>
   );
 };
