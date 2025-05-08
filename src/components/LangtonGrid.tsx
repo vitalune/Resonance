@@ -11,7 +11,6 @@ interface LangtonGridProps {
   isFullscreen: boolean;
 }
 
-// Map direction index to CSS class for the ant's arrow indicator
 const directionClasses: { [key: number]: string } = {
   0: 'ant-up',
   1: 'ant-right',
@@ -19,7 +18,7 @@ const directionClasses: { [key: number]: string } = {
   3: 'ant-left',
 };
 
-const DEFAULT_CONTAINER_SIZE = 600;
+const DEFAULT_CONTAINER_SIZE = 600; // For non-fullscreen
 
 const LangtonGrid: React.FC<LangtonGridProps> = ({ grid, antPosition, antDirection, isFullscreen }) => {
   const gridSize = grid.length;
@@ -30,17 +29,22 @@ const LangtonGrid: React.FC<LangtonGridProps> = ({ grid, antPosition, antDirecti
       if (isFullscreen) {
         const displayWidth = window.innerWidth;
         const displayHeight = window.innerHeight;
-        // Use 95% of the smaller dimension to leave some padding and maintain aspect ratio
-        const size = Math.min(displayWidth, displayHeight) * 0.95;
-        setDynamicCellSize(Math.max(1, Math.floor(size / gridSize))); // Ensure cell size is at least 1px
+        const size = Math.min(displayWidth, displayHeight) * 0.95; // Use 95% of smaller dimension
+        setDynamicCellSize(Math.max(1, Math.floor(size / gridSize))); 
       } else {
-        setDynamicCellSize(Math.max(1, Math.floor(DEFAULT_CONTAINER_SIZE / gridSize)));
+        // Adjust default size calculation for potentially smaller max-w-max card
+        const cardMaxWidth = Math.min(DEFAULT_CONTAINER_SIZE, window.innerWidth * 0.9); // Example: 90vw or 600px
+        setDynamicCellSize(Math.max(1, Math.floor(cardMaxWidth / gridSize)));
       }
     };
 
-    calculateCellSize(); // Initial calculation
+    calculateCellSize();
 
     if (isFullscreen) {
+      window.addEventListener('resize', calculateCellSize);
+      return () => window.removeEventListener('resize', calculateCellSize);
+    } else {
+      // Recalculate on normal screen resize too, if card size is responsive
       window.addEventListener('resize', calculateCellSize);
       return () => window.removeEventListener('resize', calculateCellSize);
     }
@@ -52,15 +56,15 @@ const LangtonGrid: React.FC<LangtonGridProps> = ({ grid, antPosition, antDirecti
   return (
     <div
       className={cn(
-        'flex items-center justify-center', // Centers the grid within this container
+        'flex items-center justify-center', 
         isFullscreen 
-          ? 'fixed inset-0 z-50 bg-background p-2' // Fullscreen overlay with slight padding
-          : 'relative mb-0' // Relative positioning for normal flow, mb-0 to counteract SimulationControls mt-6 if CardContent has no padding
+          ? 'fixed inset-0 z-50 bg-background p-1 sm:p-2' // Fullscreen overlay, bg-background is dark blue
+          : 'relative mb-0 w-full' // Ensure it takes available width in card for normal view
       )}
-      // This outer div handles fullscreen overlay and centering
+      style={isFullscreen ? {} : { width: `${actualGridWidth}px`, height: `${actualGridHeight}px` }} // Constrain size in normal view
     >
       <div
-        className="grid border border-border shadow-md bg-card" // Added bg-card for better contrast of cells
+        className="grid border border-border/30" // Removed bg-card and shadow-md; parent Card handles this. Subtle border for grid lines.
         style={{
           gridTemplateColumns: `repeat(${gridSize}, ${dynamicCellSize}px)`,
           gridTemplateRows: `repeat(${gridSize}, ${dynamicCellSize}px)`,
@@ -74,12 +78,13 @@ const LangtonGrid: React.FC<LangtonGridProps> = ({ grid, antPosition, antDirecti
           row.map((cellColor, x) => {
             const isAntPosition = antPosition.x === x && antPosition.y === y;
             const cellClass = cn(
-              'grid-cell border border-border/20',
+              'grid-cell border border-border/20', // Cell border
               {
-                'bg-secondary': cellColor === 0, // White cells
-                'bg-foreground': cellColor === 1, // Black cells
-                'ant-cell': isAntPosition,
-                [directionClasses[antDirection]]: isAntPosition,
+                // Use theme variables for cell colors, ensuring contrast
+                'bg-card-foreground': cellColor === 0, // "White" cells (light, from card's text color)
+                'bg-muted': cellColor === 1,         // "Black" cells (muted blue-gray)
+                'ant-cell': isAntPosition,           // Ant's current cell (red)
+                [directionClasses[antDirection]]: isAntPosition, // Ant's direction indicator
               }
             );
 
@@ -92,7 +97,7 @@ const LangtonGrid: React.FC<LangtonGridProps> = ({ grid, antPosition, antDirecti
                   height: `${dynamicCellSize}px`,
                 }}
                 role="gridcell"
-                aria-label={`Cell (${x}, ${y}), Color: ${cellColor === 0 ? 'White' : 'Black'}${isAntPosition ? ', Ant Position' : ''}`}
+                aria-label={`Cell (${x}, ${y}), Color: ${cellColor === 0 ? 'Light' : 'Dark Muted'}${isAntPosition ? ', Ant Position' : ''}`}
               />
             );
           })

@@ -2,58 +2,44 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @layer base {
   :root {
-    /* Moonlight Theme */
-    --background: 240 10% 15%; /* Dark Desaturated Blue */
-    --foreground: 60 90% 85%; /* Light Yellow */
+    /* New Theme based on provided image structure and colors */
+    --background: 220 50% 10%; /* Dark blue - general component background if needed */
+    --foreground: 0 0% 95%;   /* Light gray/White - default text color */
 
-    --card: 240 10% 20%; /* Slightly Lighter Dark Blue */
-    --card-foreground: 60 90% 85%; /* Light Yellow */
+    --card: 0 0% 7%;          /* Very dark gray/Almost black - for simulation card background */
+    --card-foreground: 0 0% 90%; /* Light text for elements on the card (e.g., controls) */
 
-    --popover: 240 10% 20%; /* Slightly Lighter Dark Blue */
-    --popover-foreground: 60 90% 85%; /* Light Yellow */
+    --popover: 0 0% 10%;       /* Dark popover background */
+    --popover-foreground: 0 0% 90%; /* Light text for popover content */
 
-    --primary: 330 90% 70%; /* Vibrant Pink */
-    --primary-foreground: 240 10% 10%; /* Very Dark Blue/Black for contrast on pink */
+    --primary: 330 90% 70%;   /* Vibrant Pink (retained from Moonlight for actions) */
+    --primary-foreground: 0 0% 100%; /* White text on primary elements for contrast */
 
-    --secondary: 240 10% 25%; /* Lighter Dark Blue */
-    --secondary-foreground: 60 50% 70%; /* Less Saturated Yellow */
+    --secondary: 220 30% 25%; /* A darker, less saturated blue for secondary elements */
+    --secondary-foreground: 0 0% 85%; /* Lighter text for secondary elements */
 
-    --muted: 240 10% 20%; /* Dark Blue (same as card) */
-    --muted-foreground: 240 5% 60%; /* Grayish Blue */
+    --muted: 220 20% 30%;     /* Muted blue-gray (e.g., for "black" cells in sim) */
+    --muted-foreground: 220 10% 65%; /* Lighter muted text */
 
-    --accent: 330 90% 70%; /* Vibrant Pink */
-    --accent-foreground: 240 10% 10%; /* Very Dark Blue/Black for contrast on pink */
+    --accent: 60 90% 75%;     /* Light Yellow (retained from Moonlight for accents) */
+    --accent-foreground: 240 10% 15%; /* Dark text for yellow accent elements */
 
-    --destructive: 0 70% 60%; /* Adjust destructive for dark theme */
-    --destructive-foreground: 0 0% 100%; /* White */
+    --destructive: 0 70% 60%; /* Destructive action color */
+    --destructive-foreground: 0 0% 100%; /* Light text on destructive actions */
 
-    --border: 240 10% 30%; /* Subtle Border */
-    --input: 240 10% 30%; /* Subtle Input Background */
-    --ring: 330 90% 70%; /* Vibrant Pink for focus rings */
+    --border: 220 30% 25%;   /* Border color (medium-dark blue) */
+    --input: 220 20% 15%;     /* Input background color (dark blue) */
+    --ring: 330 90% 70%;      /* Focus ring color (Vibrant Pink) */
 
-    --chart-1: 330 80% 65%; /* Pinkish */
-    --chart-2: 60 80% 65%;  /* Yellowish */
-    --chart-3: 210 80% 65%; /* Bluish */
-    --chart-4: 270 80% 65%; /* Purplish */
-    --chart-5: 150 80% 65%; /* Greenish */
+    --chart-1: 330 80% 65%;
+    --chart-2: 60 80% 65%;
+    --chart-3: 210 80% 65%;
+    --chart-4: 270 80% 65%;
+    --chart-5: 150 80% 65%;
 
     --radius: 0.5rem;
-
-    /* Sidebar specific variables */
-    --sidebar-background: 240 10% 18%; /* Slightly different dark shade */
-    --sidebar-foreground: 240 5% 70%; /* Lighter Grayish Blue */
-    --sidebar-primary: 330 90% 70%; /* Vibrant Pink */
-    --sidebar-primary-foreground: 240 10% 10%; /* Very Dark Blue/Black */
-    --sidebar-accent: 240 10% 28%; /* Darker Accent Background */
-    --sidebar-accent-foreground: 60 90% 85%; /* Light Yellow */
-    --sidebar-border: 240 10% 35%; /* Subtle Sidebar Border */
-    --sidebar-ring: 330 90% 70%; /* Vibrant Pink */
   }
 }
 
@@ -62,23 +48,26 @@ body {
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    /* Apply the blue gradient background */
+    background: linear-gradient(to bottom, hsl(225, 40%, 8%) 0%, hsl(210, 70%, 35%) 100%);
+    color: hsl(var(--foreground)); /* Default text color to light gray/white */
+    min-height: 100vh; /* Ensure gradient covers full viewport height */
+    /* Font family will be set by layout.tsx (Geist) */
   }
 }
 
 /* Custom styles for Langton's Ant */
-/* Ant color remains red, stands out against dark background */
 .ant-cell {
   background-color: #FF4500 !important; /* Red Ant Color */
-  position: relative; /* Needed for pseudo-element */
-  transition: background-color 0.1s ease-in-out; /* Smooth transition */
+  position: relative; 
+  transition: background-color 0.1s ease-in-out; 
 }
 
 .grid-cell {
-    transition: background-color 0.1s ease-in-out; /* Smooth transition for color flips */
+    transition: background-color 0.1s ease-in-out; 
 }
 
-/* Arrow indicating ant direction - Use foreground (yellow) for visibility */
+/* Arrow indicating ant direction - Use foreground (light text color) for visibility */
 .ant-cell::after {
   content: '';
   position: absolute;
@@ -89,24 +78,24 @@ body {
   border-left: 4px solid transparent;
   border-right: 4px solid transparent;
   transform-origin: center center;
-  transform: translate(-50%, -75%); /* Center and slightly up */
+  transform: translate(-50%, -75%); 
 }
 
 .ant-up::after {
-  border-bottom: 6px solid hsl(var(--foreground)); /* Pointing up - Yellow */
+  border-bottom: 6px solid hsl(var(--foreground)); 
 }
 
 .ant-right::after {
-   border-left: 6px solid hsl(var(--foreground)); /* Pointing right - Yellow */
+   border-left: 6px solid hsl(var(--foreground)); 
    transform: translate(-25%, -50%) rotate(90deg);
 }
 
 .ant-down::after {
-   border-top: 6px solid hsl(var(--foreground)); /* Pointing down - Yellow */
+   border-top: 6px solid hsl(var(--foreground)); 
    transform: translate(-50%, -25%) rotate(180deg);
 }
 
 .ant-left::after {
-   border-right: 6px solid hsl(var(--foreground)); /* Pointing left - Yellow */
+   border-right: 6px solid hsl(var(--foreground)); 
    transform: translate(-75%, -50%) rotate(270deg);
 }
