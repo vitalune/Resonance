@@ -64,7 +64,7 @@ const LangtonGrid: React.FC<LangtonGridProps> = ({ grid, antPosition, antDirecti
       style={isFullscreen ? {} : { width: `${actualGridWidth}px`, height: `${actualGridHeight}px` }} // Constrain size in normal view
     >
       <div
-        className="grid border border-border/30" // Removed bg-card and shadow-md; parent Card handles this. Subtle border for grid lines.
+        className="grid" // Removed border classes: border border-border/30
         style={{
           gridTemplateColumns: `repeat(${gridSize}, ${dynamicCellSize}px)`,
           gridTemplateRows: `repeat(${gridSize}, ${dynamicCellSize}px)`,
@@ -78,7 +78,7 @@ const LangtonGrid: React.FC<LangtonGridProps> = ({ grid, antPosition, antDirecti
           row.map((cellColor, x) => {
             const isAntPosition = antPosition.x === x && antPosition.y === y;
             const cellClass = cn(
-              'grid-cell border border-foreground/20', // Cell border: light gray using foreground
+              'grid-cell', // Removed cell border classes: border border-foreground/20
               {
                 // Use theme variables for cell colors, ensuring contrast
                 'bg-muted': cellColor === 0,           // Grid background (Langton's "white" cell) is very dark gray (muted blue-gray)
