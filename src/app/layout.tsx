@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'Resonance - Langton\'s Ant Simulation',
   description: 'A simulation of Langton\'s ant built with Next.js',
-  icons: './resofavi.ico',
+  icons: 'favicon.ico',
 };
 
 export default function RootLayout({
