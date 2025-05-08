@@ -55,13 +55,6 @@ body {
     --sidebar-border: 240 10% 35%; /* Subtle Sidebar Border */
     --sidebar-ring: 330 90% 70%; /* Vibrant Pink */
   }
-
-  /* Remove the explicit .dark class styles - Moonlight is the default */
-  /*
-  .dark {
-     ... old dark theme ...
-  }
-  */
 }
 
 @layer base {
