@@ -24,7 +24,7 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 bg-secondary/50">
         <h1 className="text-4xl font-bold mb-6 text-center text-primary">Resonance</h1>
         <p className="text-muted-foreground mb-8 text-center max-w-prose">
-            Explore the fascinating emergent behavior of Langton's Ant. Press Start to watch the ant move according to simple rules, creating complex patterns.
+            
         </p>
         <Card className="w-full max-w-max shadow-lg">
 
